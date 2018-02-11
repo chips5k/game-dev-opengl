@@ -44,8 +44,12 @@ int main()
 	//Display loop, iterate until instructed to close
 	while (!glfwWindowShouldClose(window)) 
 	{	
+
 		//process input
 		processInput(window);
+
+		glClearColor(0.5f, 0.4f, 0.3f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 
 		//Swap back buffer to front output buffer
 		glfwSwapBuffers(window);
@@ -59,8 +63,10 @@ int main()
 	return 0;
 }
 
+//processes input events against the window
 void processInput(GLFWwindow *window)
 {
+	//If escape key pressed, flag the window for closure
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, true);
 	}
