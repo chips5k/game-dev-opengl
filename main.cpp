@@ -101,27 +101,38 @@ int main()
 
 
     float vertices[] = {
-            -0.5f, -0.5f, 0.0f,
-            0.5f, -0.5f, 0.0f,
-            0.0f, 0.5f, 0.0f
+        0.5f, 0.5f, 0.0f,
+        0.5f, -0.5f, 0.0f,
+        -0.5f, -0.5f, 0.0f,
+        -0.5f, 0.5f, 0.0f
+    };
+
+    unsigned int indices[] = {
+        0, 1, 3,
+        1, 2, 3
     };
 
     //Setup a variables to hold the id of our VBO and VAOs
-    unsigned int VBO, VAO;
+    unsigned int VBO, VAO, EBO;
+
+
 
     //Generate our VAO and VBO items
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
 
     //Bind the VAO, so we can set/bind the vertex buffer to it
     glBindVertexArray(VAO);
 
     //Bind the buffer
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
     //copy our vertex data into the buffer (note we are rendering a still image,
     //so we specify render type of static (since it wont change much)
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     //Set up a pointer to our vertex attribute (the position data?
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
@@ -130,6 +141,11 @@ int main()
 
     //Now that our buffers are bound to the VAO (the vertex attribPointer call) we can unbind the vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    //Note, do NOT unbind the EBO buffer, as the VAO does keep track of the
+    // EBO itself (unlike the VBO which grabs a pointer to the data and can work without the vbo)
+    //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
     //Additionally we can unbind the VAO to avoid accidently using it unintentionally
     glBindVertexArray(0);
 
@@ -147,8 +163,9 @@ int main()
         glUseProgram(shaderProgram);
         //Bind the VAO to handle the input data
         glBindVertexArray(VAO);
-
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        //glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         //Swap back buffer to front output buffer
         glfwSwapBuffers(window);
@@ -160,6 +177,7 @@ int main()
     //free up resources
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
 
     //Free up all resources
     glfwTerminate();
