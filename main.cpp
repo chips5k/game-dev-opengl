@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <cmath>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -8,16 +9,22 @@ void processInput(GLFWwindow *window);
 
 const char* vertexShaderSource = "#version 330 core\n"
     "layout (location = 0) in vec3 aPos;\n"
+    "layout (location = 1) in vec3 aColour;\n"
+    "out vec4 vertexColour;\n"
     "void main()\n"
     "{\n"
-        " gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+        "gl_Position = vec4(aPos, 1.0);\n"
+        "vertexColour = vec4(aColour, 1.0);\n"
     "}\n\0";
 
 const char* fragmentShaderSource = "#version 330 core\n"
-    "out vec4 FragColour;\n"
+    "out vec4 fragColour;\n"
+    "in vec4 vertexColour;\n"
+    "uniform vec4 ourColour;\n"
     "void main()\n"
     "{\n"
-    "   FragColour = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+        //"FragColour = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+        "fragColour = vertexColour;\n"
     "}\0";
 
 
@@ -101,10 +108,10 @@ int main()
 
 
     float vertices[] = {
-        0.5f, 0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        -0.5f, -0.5f, 0.0f,
-        -0.5f, 0.5f, 0.0f
+         0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
+         0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
+        -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,
+        -0.5f,  0.5f, 0.0f,  1.0f, 0.3f, 0.5f,
     };
 
     unsigned int indices[] = {
@@ -135,9 +142,12 @@ int main()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     //Set up a pointer to our vertex attribute (the position data?
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    //enable it ?
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    //Set up a pointer to our vertex attribute (the position data?
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     //Now that our buffers are bound to the VAO (the vertex attribPointer call) we can unbind the vertex buffer
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -158,12 +168,15 @@ int main()
         glClearColor(0.5f, 0.4f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-
+        float timeValue = glfwGetTime();
+        float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+        int vertexColourLocation = glGetUniformLocation(shaderProgram, "ourColour");
         //Set all shader/rendering calls to now use the shader program
         glUseProgram(shaderProgram);
+        glUniform4f(vertexColourLocation, 0.0f, greenValue, 0.0f, 1.0f);
         //Bind the VAO to handle the input data
         glBindVertexArray(VAO);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         //glDrawArrays(GL_TRIANGLES, 0, 3);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -199,3 +212,4 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     //Tell opengl via glad the size of our viewport so it knows how to display data and coords
     glViewport(0, 0, width, height);
 }
+
