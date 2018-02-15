@@ -2,30 +2,10 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <cmath>
+#include "shader.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
-
-
-const char* vertexShaderSource = "#version 330 core\n"
-    "layout (location = 0) in vec3 aPos;\n"
-    "layout (location = 1) in vec3 aColour;\n"
-    "out vec4 vertexColour;\n"
-    "void main()\n"
-    "{\n"
-        "gl_Position = vec4(aPos, 1.0);\n"
-        "vertexColour = vec4(aColour, 1.0);\n"
-    "}\n\0";
-
-const char* fragmentShaderSource = "#version 330 core\n"
-    "out vec4 fragColour;\n"
-    "in vec4 vertexColour;\n"
-    "uniform vec4 ourColour;\n"
-    "void main()\n"
-    "{\n"
-        //"FragColour = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
-        "fragColour = vertexColour;\n"
-    "}\0";
 
 
 int main()
@@ -63,66 +43,20 @@ int main()
     //Configure on window resize callback to update the gl viewport
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
-    //setup our vertex shader
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    //Load in the vertex shader source code
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-    glCompileShader(vertexShader);
-
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cout << "ERROR - failed to compile vertex shader -> " << infoLog << std::endl;
-    }
-
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-    glCompileShader(fragmentShader);
-
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if(!success)
-    {
-        glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cout << "ERROR - failed to compile fragment shader -> " << infoLog << std::endl;
-    }
-
-    //Setup our shader program attach the compiled shaders and link it together
-    unsigned int shaderProgram  = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if(!success) {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cout << "Error - failed to link shaders -> " << infoLog << std::endl;
-    }
-
-    //Note, we can now free the actual shaders since they are bundled in to the shaderProgram
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
 
 
     float vertices[] = {
-         0.5f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
+         0.0f,  0.5f, 0.0f,  1.0f, 0.0f, 0.0f,
          0.5f, -0.5f, 0.0f,  0.0f, 1.0f, 0.0f,
         -0.5f, -0.5f, 0.0f,  0.0f, 0.0f, 1.0f,
-        -0.5f,  0.5f, 0.0f,  1.0f, 0.3f, 0.5f,
     };
 
     unsigned int indices[] = {
-        0, 1, 3,
-        1, 2, 3
+        0, 1, 2
     };
 
     //Setup a variables to hold the id of our VBO and VAOs
     unsigned int VBO, VAO, EBO;
-
-
 
     //Generate our VAO and VBO items
     glGenVertexArrays(1, &VAO);
@@ -159,21 +93,25 @@ int main()
     //Additionally we can unbind the VAO to avoid accidently using it unintentionally
     glBindVertexArray(0);
 
+    ShaderProgram shaderProgram("./shaders/vertex.vs", "./shaders/fragment.fs");
+
+
     while (!glfwWindowShouldClose(window))
     {
 
         //process input
         processInput(window);
 
-        glClearColor(0.5f, 0.4f, 0.3f, 1.0f);
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         float timeValue = glfwGetTime();
-        float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
-        int vertexColourLocation = glGetUniformLocation(shaderProgram, "ourColour");
+        float v = (sin(timeValue) / 2.0f) + 0.5f;
+
         //Set all shader/rendering calls to now use the shader program
-        glUseProgram(shaderProgram);
-        glUniform4f(vertexColourLocation, 0.0f, greenValue, 0.0f, 1.0f);
+        shaderProgram.use();
+        shaderProgram.setVector4f("ourColour", v, v, v, 1.0f);
+
         //Bind the VAO to handle the input data
         glBindVertexArray(VAO);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
