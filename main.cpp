@@ -8,6 +8,7 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
+float alphaMix = 0.2f;
 
 int main()
 {
@@ -44,16 +45,16 @@ int main()
     //Configure on window resize callback to update the gl viewport
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
+    stbi_set_flip_vertically_on_load(true);
 
+    unsigned int texture1;
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
 
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     int width, height, nrChannels;
     unsigned char *data = stbi_load("resources/images/container.jpg", &width, &height, &nrChannels, 0);
@@ -65,7 +66,26 @@ int main()
     } else {
         std::cout << "Failed to load texture container.jpg" << std::endl;
     }
+    stbi_image_free(data);
 
+    unsigned int texture2;
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    data = stbi_load("resources/images/awesomeface.png", &width, &height, &nrChannels, 0);
+    if(data)
+    {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+    } else {
+        std::cout << "Failed to load texture container.jpg" << std::endl;
+    }
     stbi_image_free(data);
 
     float vertices[] = {
@@ -140,8 +160,14 @@ int main()
         //Set all shader/rendering calls to now use the shader program
         shaderProgram.use();
         shaderProgram.setVector4f("ourColour", v, v, v, 1.0f);
+        shaderProgram.setInt("texture1", 0);
+        shaderProgram.setInt("texture2", 1);
+        shaderProgram.setFloat("alphaMix", alphaMix);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2);
 
-        glBindTexture(GL_TEXTURE_2D, texture);
         //Bind the VAO to handle the input data
         glBindVertexArray(VAO);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -171,6 +197,20 @@ void processInput(GLFWwindow *window)
     //If escape key pressed, flag the window for closure
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        alphaMix -= 0.05;
+        if(alphaMix <= 0) {
+            alphaMix = 0.0f;
+        }
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        alphaMix += 0.05;
+        if(alphaMix >= 1) {
+            alphaMix = 1.0f;
+        }
     }
 }
 

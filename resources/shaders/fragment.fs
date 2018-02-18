@@ -3,11 +3,11 @@ out vec4 fragColour;
 in vec4 vertexColour;
 in vec2 texCoord;
 uniform vec4 ourColour;
-uniform sampler2D ourTexture;
+uniform sampler2D texture1;
+uniform sampler2D texture2;
+uniform float alphaMix;
 
 void main()
 {
-    fragColour = texture(ourTexture, texCoord) * vec4(vertexColour);
-    //fragColour = vertexColour;
-    //fragColour = vec4(vertexColour.x * ourColour.x, vertexColour.y * ourColour.y, vertexColour.z * ourColour.z, 1.0);
+    fragColour = mix(texture(texture1, texCoord), texture(texture2, vec2(-texCoord.x, texCoord.y)), alphaMix);
 }
