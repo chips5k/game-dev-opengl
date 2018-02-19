@@ -5,6 +5,10 @@
 #include "shader.h"
 #include "vendor/src/stb/stb_image.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
@@ -100,6 +104,8 @@ int main()
         2, 3, 0
     };
 
+
+
     //Setup a variables to hold the id of our VBO and VAOs
     unsigned int VBO, VAO, EBO;
 
@@ -145,6 +151,9 @@ int main()
     ShaderProgram shaderProgram("./resources/shaders/vertex.vs", "./resources/shaders/fragment.fs");
 
 
+
+
+
     while (!glfwWindowShouldClose(window))
     {
 
@@ -163,6 +172,16 @@ int main()
         shaderProgram.setInt("texture1", 0);
         shaderProgram.setInt("texture2", 1);
         shaderProgram.setFloat("alphaMix", alphaMix);
+
+        glm::mat4 trans = glm::mat4(1.0f);
+
+        trans = glm::translate(trans, glm::vec3(-0.5f, 0.5f, 0.0f));
+        trans = glm::scale(trans, glm::vec3(sin(timeValue), sin(timeValue),sin(timeValue)));
+        trans = glm::rotate(trans, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        unsigned int transformLoc = glGetUniformLocation(shaderProgram.id, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1);
         glActiveTexture(GL_TEXTURE1);
@@ -172,6 +191,14 @@ int main()
         glBindVertexArray(VAO);
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         //glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        trans = glm::mat4(1.0f);
+        trans = glm::translate(trans, glm::vec3(0.5f, -0.5f, 0.0f));
+        trans = glm::rotate(trans, -(float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
+
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         //Swap back buffer to front output buffer
