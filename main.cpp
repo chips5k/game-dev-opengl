@@ -12,8 +12,8 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 
-float alphaMix = 0.2f;
-
+float alphaMix = 0.5f;
+glm::vec3 camPos = glm::vec3(0.0f, 0.0f, 0.0f);
 int main()
 {
 
@@ -252,7 +252,7 @@ int main()
 //        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
         glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        view = glm::translate(view, camPos);
         unsigned int viewLoc = glGetUniformLocation(shaderProgram.id, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -301,19 +301,32 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
     }
 
-    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        alphaMix -= 0.05;
-        if(alphaMix <= 0) {
-            alphaMix = 0.0f;
-        }
-    }
+
 
     if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        alphaMix += 0.05;
-        if(alphaMix >= 1) {
-            alphaMix = 1.0f;
-        }
+        camPos = glm::vec3(camPos.x, camPos.y - 0.05f, camPos.z);
     }
+
+    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        camPos = glm::vec3(camPos.x, camPos.y + 0.05f, camPos.z);
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        camPos = glm::vec3(camPos.x + 0.05f, camPos.y, camPos.z);
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        camPos = glm::vec3(camPos.x - 0.05f, camPos.y, camPos.z);
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        camPos = glm::vec3(camPos.x, camPos.y, camPos.z - 0.05f);
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        camPos = glm::vec3(camPos.x, camPos.y, camPos.z + 0.05f);
+    }
+
 }
 
 //Callback for updating the gl viewport to match window size
