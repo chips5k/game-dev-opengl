@@ -11,7 +11,14 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
+void mouseCallback(GLFWwindow *window, double xPos, double yPos);
+void mouseScrollCallback(GLFWwindow *window, double xOffset, double yOffset);
 
+float lastMouseX = 0;
+float lastMouseY = 0;
+float mouseDeltaX = 0;
+float mouseDeltaY = 0;
+bool mouseEntered = false;
 float alphaMix = 0.5f;
 glm::vec3 camPos = glm::vec3(0.0f, 0.0f, 0.0f);
 int main()
@@ -50,6 +57,12 @@ int main()
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
     stbi_set_flip_vertically_on_load(true);
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    glfwSetCursorPosCallback(window, mouseCallback);
+    glfwSetScrollCallback(window, mouseScrollCallback);
+
 
     unsigned int texture1;
     glGenTextures(1, &texture1);
@@ -252,7 +265,16 @@ int main()
 //        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
         glm::mat4 view = glm::mat4(1.0f);
+        //calculate angle of y rotation
+
+        float yRot = mouseDeltaY / 600 * 360;
+        view = glm::rotate(view, glm::radians(yRot), glm::vec3(1.0f, 0.0f, 0.0f));
+
+        float xRot = mouseDeltaX / 800 * 360;
+        view = glm::rotate(view, glm::radians(xRot), glm::vec3(0.0f, 1.0f, 0.0f));
+
         view = glm::translate(view, camPos);
+
         unsigned int viewLoc = glGetUniformLocation(shaderProgram.id, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 
@@ -301,32 +323,40 @@ void processInput(GLFWwindow *window)
         glfwSetWindowShouldClose(window, true);
     }
 
-
-
-    if(glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
-        camPos = glm::vec3(camPos.x, camPos.y - 0.05f, camPos.z);
-    }
-
-    if(glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
-        camPos = glm::vec3(camPos.x, camPos.y + 0.05f, camPos.z);
-    }
-
-    if(glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
-        camPos = glm::vec3(camPos.x + 0.05f, camPos.y, camPos.z);
-    }
-
-    if(glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
-        camPos = glm::vec3(camPos.x - 0.05f, camPos.y, camPos.z);
+    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        camPos = glm::vec3(camPos.x, camPos.y, camPos.z + 0.05f);
     }
 
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
         camPos = glm::vec3(camPos.x, camPos.y, camPos.z - 0.05f);
     }
 
-    if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        camPos = glm::vec3(camPos.x, camPos.y, camPos.z + 0.05f);
+    if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        camPos = glm::vec3(camPos.x + 0.05f, camPos.y, camPos.z);
     }
 
+    if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        camPos = glm::vec3(camPos.x - 0.05f, camPos.y, camPos.z);
+    }
+}
+
+
+void mouseCallback(GLFWwindow *window, double xPos, double yPos)
+{
+    if(!mouseEntered)
+    {
+        lastMouseX = xPos;
+        lastMouseY = yPos;
+        mouseEntered = true;
+    }
+
+    mouseDeltaX = xPos - lastMouseX;
+    mouseDeltaY = yPos - lastMouseY;
+}
+
+void mouseScrollCallback(GLFWwindow *window, double xOffset, double yOffset)
+{
+    camPos = glm::vec3(camPos.x, camPos.y + yOffset, camPos.z);
 }
 
 //Callback for updating the gl viewport to match window size
