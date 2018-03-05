@@ -14,13 +14,16 @@ void processInput(GLFWwindow *window);
 void mouseCallback(GLFWwindow *window, double xPos, double yPos);
 void mouseScrollCallback(GLFWwindow *window, double xOffset, double yOffset);
 
-float lastMouseX = 0;
-float lastMouseY = 0;
-float mouseDeltaX = 0;
+float lastMouseX = 800 / 2;
+float lastMouseY = 600 / 2;
+float mouseDeltaX = -90;
 float mouseDeltaY = 0;
 bool mouseEntered = false;
 float alphaMix = 0.5f;
-glm::vec3 camPos = glm::vec3(0.0f, 0.0f, 0.0f);
+glm::vec3 cameraPosition = glm::vec3(0.0f, 0.0f, 5.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
 int main()
 {
 
@@ -259,21 +262,9 @@ int main()
 
         glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
-//        glm::mat4 model = glm::mat4(1.0f);
-//        model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         unsigned int modelLoc = glGetUniformLocation(shaderProgram.id, "model");
-//        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
-        glm::mat4 view = glm::mat4(1.0f);
-        //calculate angle of y rotation
-
-        float yRot = mouseDeltaY / 600 * 360;
-        view = glm::rotate(view, glm::radians(yRot), glm::vec3(1.0f, 0.0f, 0.0f));
-
-        float xRot = mouseDeltaX / 800 * 360;
-        view = glm::rotate(view, glm::radians(xRot), glm::vec3(0.0f, 1.0f, 0.0f));
-
-        view = glm::translate(view, camPos);
+        glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraFront, cameraUp);
 
         unsigned int viewLoc = glGetUniformLocation(shaderProgram.id, "view");
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
@@ -324,25 +315,35 @@ void processInput(GLFWwindow *window)
     }
 
     if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-        camPos = glm::vec3(camPos.x, camPos.y, camPos.z + 0.05f);
+        cameraPosition += cameraFront * 0.05f;
     }
 
     if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-        camPos = glm::vec3(camPos.x, camPos.y, camPos.z - 0.05f);
+        cameraPosition -= cameraFront * 0.05f;
     }
 
     if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        camPos = glm::vec3(camPos.x + 0.05f, camPos.y, camPos.z);
+        cameraPosition -= glm::normalize(glm::cross(cameraFront, cameraUp)) * 0.05f;
     }
 
     if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        camPos = glm::vec3(camPos.x - 0.05f, camPos.y, camPos.z);
+        cameraPosition += glm::normalize(glm::cross(cameraFront, cameraUp)) * 0.05f;
     }
+
+    if(glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        cameraPosition -= glm::normalize(glm::cross(cameraFront, glm::cross(cameraFront, cameraUp))) * 0.05f;
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+        cameraPosition += glm::normalize(glm::cross(cameraFront, glm::cross(cameraFront, cameraUp))) * 0.05f;
+    }
+
 }
 
 
 void mouseCallback(GLFWwindow *window, double xPos, double yPos)
 {
+
     if(!mouseEntered)
     {
         lastMouseX = xPos;
@@ -350,13 +351,28 @@ void mouseCallback(GLFWwindow *window, double xPos, double yPos)
         mouseEntered = true;
     }
 
-    mouseDeltaX = xPos - lastMouseX;
-    mouseDeltaY = yPos - lastMouseY;
+    mouseDeltaX += xPos - lastMouseX;
+    mouseDeltaY += lastMouseY - yPos;
+
+    lastMouseX = xPos;
+    lastMouseY = yPos;
+
+    if (mouseDeltaY > 89.0f)
+        mouseDeltaY = 89.0f;
+    if (mouseDeltaY < -89.0f)
+        mouseDeltaY = -89.0f;
+
+    cameraFront.y = sin(glm::radians(mouseDeltaY));
+    cameraFront.x = cos(glm::radians(mouseDeltaY)) * cos(glm::radians(mouseDeltaX));
+    cameraFront.z = cos(glm::radians(mouseDeltaY)) * sin(glm::radians(mouseDeltaX));
+    cameraFront = glm::normalize(cameraFront);
+
+
 }
 
 void mouseScrollCallback(GLFWwindow *window, double xOffset, double yOffset)
 {
-    camPos = glm::vec3(camPos.x, camPos.y + yOffset, camPos.z);
+
 }
 
 //Callback for updating the gl viewport to match window size
